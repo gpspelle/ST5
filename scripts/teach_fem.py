@@ -14,8 +14,10 @@ from compute_alpha_w import compute_alpha
 
 """ FOR CLASS ROOM ************************************************************ """
 import sys
-sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching\\mrgpy")
-sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching")
+sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching/mrgpy")
+sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching")
+#sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching\\mrgpy")
+#sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching")
 from pytransform import pyarmor_runtime
 pyarmor_runtime()
 """ ******************************************************************************** """
@@ -31,7 +33,7 @@ import alip
 
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(mrgpy.__file__))
-    # DEMO_DIR = os.path.join(PACKAGE_DIR, 'examples')
+# DEMO_DIR = os.path.join(PACKAGE_DIR, 'examples')
 INPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'input')
 OUTPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'output')
 
@@ -239,9 +241,12 @@ def femFiniteElementMethod():
         energy = []
 
         # Pass the range and the code will iterate all the integer wavenumbers inside this range
-        interval_w = [i for i in numpy.arange(params.wavenumber[0], params.wavenumber[1])]
+        print(params.wavenumber)
+        interval_k = [params.wavenumber[i] for i in params.wavenumber]
+        print(interval_k)
+        exit(1)
 
-        for k in interval_w:
+        for k in interval_k:
             print("#################")
             print("WAVENUMBER: " + str(k))
             print("#################")
@@ -332,10 +337,11 @@ def femFiniteElementMethod():
                         robin_alpha.append(complex(1., 0.))
 
                         # first robin edge (wall)
-                        if k == 1:
+                        if key == 1:
                             robin_beta.append(compute_alphas(k*c0))
-                        elif k == 2:
-                            robin_beta.append()
+                        # second robin edge (sky)
+                        elif key == 2:
+                            robin_beta.append(complex(0, -k))
                         robin_rhseqn = numpy.zeros((bnd_mesh.numb_node,), dtype=numpy.complex128)
                     ProcessComputeP1xFElementaryRhs = ProcessComputeElementaryMatrix('F', robin_rhseqn)
                     robin_assembler.preassemble([], ['F'], ProcessComputeP1xFElementaryRhs)
@@ -440,17 +446,13 @@ def femFiniteElementMethod():
             if params.is_modal_analysis is True:
                 # -- compute eigenvalues
                 lambdas, u = numpy.linalg.eig(lhs.todense())
-                #print(rhs, rhsd)
-                #exit(1)
+
                 # normalize eigenvectors with L2 norm
-                u_norm = complex_normalize(u)
-                #print(u, u.shape)
-                #print(u_norm, u_norm.shape)
-                #exit(1)
-                #print(lambdas, u_norm)
+                for v in range(u.shape[0]):
+                    n = scipy.linalg.norm(u[v])
+                    u[x] /= n
 
-
-                 # -- compute existence surface
+                # -- compute existence surface
                 # existence_surface = []
                 #for i in range(0,u_norm.shape[0]):
                 #    integrator = fem.meshcalc.MeshIntegrator(domain_mesh, ngpt=9, ambient_dim=2)
@@ -461,29 +463,43 @@ def femFiniteElementMethod():
                 #    print('existence_surface : ', existence_surface)
 
                 # -- sort eigenvalues and eigenmodes
-                u_norm.sort()
-                lambdas.sort()
+                lambdas_sorted = sorted(lambdas, key=lambda v: numpy.abs(numpy.imag(v)))
+                u_sorted  = numpy.transpose([x for _,x in sorted(zip(val, numpy.transpose(u)), key=lambda pair: numpy.abs(numpy.imag(pair[0])))])
+
 
                 # -- plot eigenvalues
-                import alip
-                output_filename = stg + '_eigs_' + str(k)
-                output_filename = os.path.join(OUTPUT_DATA_DIR, output_filename)
-                alip.matrices.scatter(lambdas, output_filename)
+                #import alip
+                #output_filename = stg + '_eigs_' + str(k)
+                #output_filename = os.path.join(OUTPUT_DATA_DIR, output_filename)
+                #alip.matrices.scatter(lambdas, output_filename)
 
-                # -- plot eigenvectors
-                imin, imax = 0, u_norm.shape[1]
+                # -- plot first eigenvectors (small complex part)
+                imin, imax = 0, 10
                 for i in range(imin, imax, 1):
                     print("Eigenvector: " + str(i) + " of " + str(imax))
-                    node_data = u_norm[:, i]
-                    eigenvalue = complex(lambdas[i])
-                    print("#  eigenvalue number %d" % (i,), ' : ', lambdas[i])
+                    node_data = u_sorted[:, i]
+                    eigenvalue = complex(lambdas_sorted[i])
+                    print("#  eigenvalue number %d" % (i,), ' : ', lambdas_sorted[i])
                     output_filename = stg + "__%06d__eigabs" % (i,) + '_' + str(k)
                     output_filename = os.path.join(output_path, output_filename)
 
-                    print(type(node_data))
-                    print(numpy.asarray(node_data).shape)
+                    myarray = numpy.squeeze(numpy.absolute(numpy.asarray(node_data)), axis=1)
+                    meshgrid.graphics.plotting.contourf(domain_mesh, myarray, output_filename, str(eigenvalue), dpi=600)
 
-                    exit(1)
+                    print(f'Traceback {mygpse}: Plotting eigenvalues.')
+                    output_filename = stg + '_eigval_' + str(k)
+                    output_filename = os.path.join(OUTPUT_DATA_DIR, output_filename)
+
+                # -- plot last eigenvectors (big complex part)
+                imin, imax = u_sorted.shape[1]- 10, u_sorted.shape[1]
+                for i in range(imin, imax, 1):
+                    print("Eigenvector: " + str(i) + " of " + str(imax))
+                    node_data = u_sorted[:, i]
+                    eigenvalue = complex(lambdas_sorted[i])
+                    print("#  eigenvalue number %d" % (i,), ' : ', lambdas_sorted[i])
+                    output_filename = stg + "__%06d__eigabs" % (i,) + '_' + str(k)
+                    output_filename = os.path.join(output_path, output_filename)
+
                     myarray = numpy.squeeze(numpy.absolute(numpy.asarray(node_data)), axis=1)
                     meshgrid.graphics.plotting.contourf(domain_mesh, myarray, output_filename, str(eigenvalue), dpi=600)
 
@@ -501,14 +517,14 @@ def femFiniteElementMethod():
         # Create 1x1 sub plots
         gs = gridspec.GridSpec(1, 1)
 
-        pl.figure(figsize=(3,2))
+        pl.figure(figsize=(12,5))
         ax = pl.subplot(gs[0, 0])  # row 0, col 0
-        pl.ylabel("|u|²")
+        pl.ylabel("J(Omega_0, k)")
         pl.xlabel("k")
 
         print(energy)
-        print(interval_w, energy)
-        pl.plot(interval_w, energy)
+        print(interval_k, energy)
+        pl.plot(interval_k, energy)
 
         plt.show()
         return
