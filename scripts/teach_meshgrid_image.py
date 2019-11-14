@@ -3,12 +3,14 @@
 import math
 import numpy as np
 import os
+import shutil
+
 
 
 """ FOR CLASS ROOM ************************************************************ """
 import sys
-sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching\\mrgpy")
-sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching")
+sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching/mrgpylinux")
+sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching")
 from pytransform import pyarmor_runtime
 pyarmor_runtime()
 """ ******************************************************************************** """
@@ -21,14 +23,25 @@ from femcalc import benchmarks
 from femcalc import meshgrid
 import femcalc.meshgrid.graphics
 import femcalc.benchmarks.meshes
-import mrgpy
+import mrgpylinux
 
 
-PACKAGE_DIR = os.path.dirname(os.path.abspath(mrgpy.__file__))
+try:
+    id_ = sys.argv[1]
+except:
+    print("You must pass a parameter to identify which image you're using")
+    exit(1)
+
+(id_dir, ext) = os.path.splitext(id_)
+PACKAGE_DIR = os.path.dirname(os.path.abspath(mrgpylinux.__file__))
 #DEMO_DIR = os.path.join(PACKAGE_DIR, 'examples')
 INPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'input')
-OUTPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'output')
+OUTPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'output', id_dir)
+OUTPUT_DATA_FILE = os.path.join(OUTPUT_DATA_DIR, id_dir)
+if os.path.exists(OUTPUT_DATA_DIR) and os.path.isdir(OUTPUT_DATA_DIR):
+    shutil.rmtree(OUTPUT_DATA_DIR)
 
+os.mkdir(OUTPUT_DATA_DIR)
 
 def normalizedMesh(filename):
     """Translate and scale the mesh.
@@ -38,7 +51,7 @@ def normalizedMesh(filename):
                                             mode='lbf', inplace=True)
     box = meshgrid.geometry.BoundingBox.fromMrgMesh(moved_mesh)
     max_len = max(box.extents)
-    factor = 1.0 / box.extents[1]
+    #factor = 1.0 / box.extents[1]
     factor = math.pi / box.extents[1]
     print(f'before box.extents {box.extents}')
 
@@ -50,7 +63,7 @@ def normalizedMesh(filename):
 
 class DemoBoundarySubmeshes(examples.Demo):
     def demonstrate(self):
-        filename = os.path.join(OUTPUT_DATA_DIR, 'fractal0.png')
+        filename = os.path.join(INPUT_DATA_DIR, id_)
 
 #        (root, ext) = os.path.splitext(filename)
 #        input_file = root + '.png'
@@ -58,16 +71,14 @@ class DemoBoundarySubmeshes(examples.Demo):
         domain_mesh = normalizedMesh(filename)
         domain_l2g = np.arange(0, domain_mesh.numb_node, 1, dtype='int64')
 
-        (root, ext) = os.path.splitext(filename)
-        output_file = root
+        output_file = OUTPUT_DATA_FILE
         meshgrid.iomrg.writeVtk(output_file, domain_mesh, id=None)
         meshgrid.iomrg.writeMtx(output_file, domain_l2g, id=None)
 
         skinner = meshgrid.adjacency.Skinner.fromMesh(domain_mesh)
         boundary_mesh = skinner.buildMesh()
         boundary_l2g = skinner.l2g_nodes()
-        (root, ext) = os.path.splitext(filename)
-        output_file = root + 'boundary'
+        output_file = OUTPUT_DATA_FILE +  'boundary'
         meshgrid.iomrg.writeVtk(output_file, boundary_mesh, id=None)
         meshgrid.iomrg.writeMtx(output_file, boundary_l2g, id=None)
 
@@ -83,8 +94,7 @@ class DemoBoundarySubmeshes(examples.Demo):
         submesher.setMask(south_mask)
         south_mesh = submesher.buildMesh()
         south_l2g = submesher.l2g_nodes()
-        (root, ext) = os.path.splitext(filename)
-        output_file = root
+        output_file = OUTPUT_DATA_FILE
         meshgrid.iomrg.writeVtk(output_file, south_mesh, id=0)
         meshgrid.iomrg.writeMtx(output_file, south_l2g, id=0)
 
@@ -92,8 +102,7 @@ class DemoBoundarySubmeshes(examples.Demo):
         submesher.setMask(north_mask)
         north_mesh = submesher.buildMesh()
         north_l2g = submesher.l2g_nodes()
-        (root, ext) = os.path.splitext(filename)
-        output_file = root
+        output_file = OUTPUT_DATA_FILE
         meshgrid.iomrg.writeVtk(output_file, north_mesh, id=2)
         meshgrid.iomrg.writeMtx(output_file, north_l2g, id=2)
 
@@ -101,8 +110,7 @@ class DemoBoundarySubmeshes(examples.Demo):
         submesher.setMask(west_mask)
         west_mesh = submesher.buildMesh()
         west_l2g = submesher.l2g_nodes()
-        (root, ext) = os.path.splitext(filename)
-        output_file = root
+        output_file = OUTPUT_DATA_FILE
         meshgrid.iomrg.writeVtk(output_file, west_mesh, id=3)
         meshgrid.iomrg.writeMtx(output_file, west_l2g, id=3)
 
@@ -111,8 +119,7 @@ class DemoBoundarySubmeshes(examples.Demo):
         submesher.negateMask()
         east_mesh = submesher.buildMesh()
         east_l2g = submesher.l2g_nodes()
-        (root, ext) = os.path.splitext(filename)
-        output_file = root
+        output_file = OUTPUT_DATA_FILE
         meshgrid.iomrg.writeVtk(output_file, east_mesh, id=1)
         meshgrid.iomrg.writeMtx(output_file, east_l2g, id=1)
 
