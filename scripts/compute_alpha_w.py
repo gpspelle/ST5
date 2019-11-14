@@ -100,7 +100,7 @@ def compute_alpha(omega):
         #    return 1.
         #else:
         #    return 0.
-        return ( ( 1 / ( 2 * L ) ) * complex_quadrature( lambda y: ( g(y) \
+        return ( ( 1 / ( 2 * l ) ) * complex_quadrature( lambda y: ( g(y) \
             * numpy.exp( complex( 0, -k * numpy.pi / l ) ) ), -l, l ) )
 
     @Memoize

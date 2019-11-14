@@ -1,13 +1,13 @@
 {
     "mesh_data": {
-        "filebasename": [ "fractal3" ],
+        "filebasename": [ "pre-fractal" ],
         "boundaries": [ [[ 0, "neumann" ],
-                   [ 1, "robin" ],
-                   [ 2, "neumann" ],
+                   [ 1, "robin_0" ],
+                   [ 2, "robin_1" ],
                    [ 3, "dirichlet" ]] ]
     },
     "eqn_data": {
-        "wavenumber":[ [ 10.0, 11.0]],
+        "wavenumber":[ [ 10.0]],
         "is_analytic_solution": [ false ],
         "is_finite_element_analysis": [ true ],
         "is_modal_analysis": [ true ]

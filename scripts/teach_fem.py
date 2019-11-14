@@ -10,6 +10,7 @@ from matplotlib import gridspec, pylab as pl
 import matplotlib.pyplot as plt
 from numpy import linalg as LA
 from sklearn.preprocessing import normalize
+from compute_alpha_w import compute_alpha
 
 """ FOR CLASS ROOM ************************************************************ """
 import sys
@@ -158,6 +159,8 @@ def complex_normalize(m):
     return m
 
 def femFiniteElementMethod():
+
+    c0 = 343
     # ***************************************************
     # WARNING: the code does not work for alpha \neq 1
     # since in this case we do not have second order partial
@@ -235,69 +238,6 @@ def femFiniteElementMethod():
 
         energy = []
 
-        # Create a dictionary with the calculated values of the alpha coefficient.
-        alphas = dict()
-        alphas[1] = complex(10 - 10j)
-        alphas[2] = complex(11.20021977 - 11.30838268j)
-        alphas[3] = complex(13.68 - 13.88j)
-        alphas[4] = complex(15.76 - 16.07j)
-        alphas[5] = complex(16.73 - 18.79j)
-        alphas[6] = complex(19.22 - 19.76j)
-        alphas[7] = complex(20.71 - 21.39j)
-        alphas[8] = complex(22.20 - 22.91j)
-        alphas[9] = complex(23.37 - 24.35j)
-        alphas[10] = complex(24.66 - 25.89j)
-        alphas[11] = complex(25.75 - 27.11j)
-        alphas[12] = complex(26.76 - 28.29j)
-        alphas[13] = complex(29.71 - 29.55j)
-        alphas[14] = complex(28.84 - 30.79j)
-        alphas[15] = complex(29.71 - 31.67j)
-        alphas[16] = complex(30.64 - 33.00j)
-        alphas[17] = complex(31.33 - 34.14j)
-        alphas[18] = complex(31.40 - 35.18j)
-        alphas[19] = complex(33.15 - 36.26j)
-        alphas[20] = complex(33.97 - 36.98j)
-        alphas[21] = complex(34.86956027 - 39.2482969j)
-        alphas[22] = complex(35.55972381 - 38.96471719j)
-        alphas[23] = complex(36.37735743 - 39.81218064j)
-        alphas[24] = complex(36.9195351 - 41.19620619j)
-        alphas[25] = complex(37.68843461 - 36.60165221j)
-        alphas[26] = complex(37.98046679 - 41.2088303j)
-        alphas[27] = complex(38.8753766 - 43.58178879j)
-        alphas[28] = complex(38.99997144 - 44.1653056j)
-        alphas[29] = complex(40.17592501 - 45.65052768j)
-        alphas[30] = complex(40.68603689 - 45.70676429j)
-        alphas[31] = complex(40.9469396 - 46.64397079j)
-        alphas[32] = complex(42.08582465 - 47.93221063j)
-        alphas[33] = complex(43.14617497 - 47.85799093j)
-        alphas[34] = complex(42.72156373 - 48.35431646j)
-        alphas[35] = complex(43.94432592 - 50.44014222j)
-        alphas[36] = complex(43.96220158 - 51.79622084j)
-        alphas[37] = complex(44.47626072 - 50.64170903j)
-        alphas[38] = complex(46.84834443 - 54.16328675j)
-        alphas[39] = complex(44.05685953 - 51.24287772j)
-        alphas[40] = complex(45.05681276 - 54.54796475j)
-        alphas[41] = complex(46.10785833 - 54.83860194j)
-        alphas[42] = complex(39.12186258 - 57.18538701j)
-        alphas[43] = complex(46.45643745 - 55.9657702j)
-        alphas[44] = complex(45.71619129 - 56.34784214j)
-        alphas[45] = complex(48.14744402 - 58.28488724j)
-        alphas[46] = complex(48.88565931 - 59.09008603j)
-        alphas[47] = complex(53.00385732 - 64.58785647j)
-        alphas[48] = complex(48.77352693 - 61.95009813j)
-        alphas[49] = complex(49.79718704 - 62.13608789j)
-        alphas[50] = complex(54.87115253 - 65.42382656j)
-        alphas[51] = complex(43.16609097 - 57.10496921j)
-        alphas[52] = complex(43.2735739 - 54.64578529j)
-        alphas[53] = complex(50.78186549 - 63.56826209j)
-        alphas[54] = complex(51.88578646 - 65.31204285j)
-        alphas[55] = complex(51.67626264 - 64.51732573j)
-        alphas[56] = complex(50.9099199 - 67.72956163j)
-        alphas[57] = complex(52.34028381 - 65.9545511j)
-        alphas[58] = complex(52.301865 - 64.5711245j)
-        alphas[59] = complex(53.59118949 - 68.25973657j)
-        alphas[60] = complex(52.79285883 - 67.71639993j)
-
         # Pass the range and the code will iterate all the integer wavenumbers inside this range
         interval_w = [i for i in numpy.arange(params.wavenumber[0], params.wavenumber[1])]
 
@@ -374,7 +314,7 @@ def femFiniteElementMethod():
                     # assembly rhs on neumann
                     neumann_rhs.append(neumann_assembler.assemble('F', params.storage))
                     neumann_id += 1
-                elif value == 'robin':
+                elif value == 'robin_0' or value == 'robin_1':
                     bnd_mesh = boundary_meshes[key]
                     bnd_l2g = boundary_l2gs[key]
                     # assembler on robin
@@ -385,12 +325,17 @@ def femFiniteElementMethod():
                     # preassembly rhs on robin
                     if params.is_analytic_solution is True:
                         robin_alpha.append(complex(1., 0.))
-                        robin_beta.append(alphas[k])
+                        robin_beta.append(compute_alphas(k*c0))
                         robin_rhseqn = problem.evalBoundaryTermOn('robin', key, bnd_mesh.node_coord, robin_alpha[robin_id],
                                                                   robin_beta[robin_id])
                     else:
                         robin_alpha.append(complex(1., 0.))
-                        robin_beta.append(alphas[k])
+
+                        # first robin edge (wall)
+                        if k == 1:
+                            robin_beta.append(compute_alphas(k*c0))
+                        elif k == 2:
+                            robin_beta.append()
                         robin_rhseqn = numpy.zeros((bnd_mesh.numb_node,), dtype=numpy.complex128)
                     ProcessComputeP1xFElementaryRhs = ProcessComputeElementaryMatrix('F', robin_rhseqn)
                     robin_assembler.preassemble([], ['F'], ProcessComputeP1xFElementaryRhs)
