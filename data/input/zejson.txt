@@ -1,6 +1,6 @@
 {
     "mesh_data": {
-        "filebasename": [ "pre-fractal" ],
+        "filebasename": [ "fractal0" ],
         "boundaries": [ [[ 0, "neumann" ],
                    [ 1, "robin_0" ],
                    [ 2, "robin_1" ],

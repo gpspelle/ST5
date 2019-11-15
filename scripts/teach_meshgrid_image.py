@@ -6,7 +6,6 @@ import os
 import shutil
 
 
-
 """ FOR CLASS ROOM ************************************************************ """
 import sys
 sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching/mrgpylinux")

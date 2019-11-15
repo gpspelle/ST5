@@ -14,7 +14,7 @@ from compute_alpha_w import compute_alpha
 
 """ FOR CLASS ROOM ************************************************************ """
 import sys
-sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching/mrgpy")
+sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching/mrgpylinux")
 sys.path.insert(0, "/home/pellegrino/Documents/Pollution/mrgteaching")
 #sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching\\mrgpy")
 #sys.path.insert(0, "C:\\Users\\gps_0\\Downloads\\mrgteaching")
@@ -28,11 +28,10 @@ from femcalc import meshgrid
 import femcalc.meshgrid.graphics
 from femcalc import fem
 import pde
-import mrgpy
+import mrgpylinux
 import alip
 
-
-PACKAGE_DIR = os.path.dirname(os.path.abspath(mrgpy.__file__))
+PACKAGE_DIR = os.path.dirname(os.path.abspath(mrgpylinux.__file__))
 # DEMO_DIR = os.path.join(PACKAGE_DIR, 'examples')
 INPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'input')
 OUTPUT_DATA_DIR = os.path.join(PACKAGE_DIR, '..', 'data', 'output')
@@ -172,7 +171,6 @@ def femFiniteElementMethod():
     mygpse = selfsig(femFiniteElementMethod) + '()'
     mygps = '#  '
 
-    input_path = OUTPUT_DATA_DIR
     output_path = OUTPUT_DATA_DIR
 
     # ----------------------------------------------------------------------
@@ -180,8 +178,7 @@ def femFiniteElementMethod():
     # ----------------------------------------------------------------------
     print(f'Traceback {mygpse}: Reading input parameters.')
     filename = 'zejson.txt'
-    pathname = OUTPUT_DATA_DIR
-    filename = os.path.join(pathname, filename)
+    filename = os.path.join(INPUT_DATA_DIR, filename)
     print(f'Logging: input file {filename}')
     params_namedtuples = femReadInputParameters(filename)
 
@@ -189,6 +186,7 @@ def femFiniteElementMethod():
     # == loop on input parameters
     # ======================================================================
     for params in params_namedtuples:
+        input_path = os.path.join(OUTPUT_DATA_DIR, params.filebasename)
         print(f'{mygps}input parameter')
         for key, val in params._asdict().items():
             print(f'{mygps}{key} : {val}')
@@ -242,11 +240,10 @@ def femFiniteElementMethod():
 
         # Pass the range and the code will iterate all the integer wavenumbers inside this range
         print(params.wavenumber)
-        interval_k = [params.wavenumber[i] for i in params.wavenumber]
-        print(interval_k)
-        exit(1)
+        #interval_k = [params.wavenumber[i] for i in params.wavenumber]
+        #print(interval_k)
 
-        for k in interval_k:
+        for k in params.wavenumber:
             print("#################")
             print("WAVENUMBER: " + str(k))
             print("#################")
@@ -330,7 +327,7 @@ def femFiniteElementMethod():
                     # preassembly rhs on robin
                     if params.is_analytic_solution is True:
                         robin_alpha.append(complex(1., 0.))
-                        robin_beta.append(compute_alphas(k*c0))
+                        robin_beta.append(compute_alpha(k*c0))
                         robin_rhseqn = problem.evalBoundaryTermOn('robin', key, bnd_mesh.node_coord, robin_alpha[robin_id],
                                                                   robin_beta[robin_id])
                     else:
@@ -338,7 +335,7 @@ def femFiniteElementMethod():
 
                         # first robin edge (wall)
                         if key == 1:
-                            robin_beta.append(compute_alphas(k*c0))
+                            robin_beta.append(compute_alpha(k*c0))
                         # second robin edge (sky)
                         elif key == 2:
                             robin_beta.append(complex(0, -k))
